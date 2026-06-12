@@ -59,3 +59,24 @@ def search_post(req: SearchRequest):
         "total_results": len(results),
         "products"    : results,
     }
+
+from app.recommendation.recommender import recommend
+
+class RecommendRequest(BaseModel):
+    query     : str
+    session_id: str = "default"
+    top_k     : int = 5
+
+@router.post("/recommend", summary="Full AI recommendation with intent + memory")
+def get_recommendations(req: RecommendRequest):
+    if not req.query.strip():
+        raise HTTPException(status_code=400, detail="Query cannot be empty")
+    result = recommend(query=req.query, session_id=req.session_id, top_k=req.top_k)
+    return {
+        "query"        : req.query,
+        "session_id"   : req.session_id,
+        "intent"       : result["intent"],
+        "entities"     : result["entities"],
+        "total_results": len(result["products"]),
+        "products"     : result["products"],
+    }
