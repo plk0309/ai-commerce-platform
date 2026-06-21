@@ -85,7 +85,7 @@ POST /api/v1/chat
                                           Pandas Analytics Engine
                                           (revenue, trends, anomalies)
                                                        │
-                                          ─────────────┘
+                                                       │
                                                        │
                                                        ▼
                                           Groq LLaMA 3.1
