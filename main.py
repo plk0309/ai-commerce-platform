@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from app.recommendation.search import load_search_engine
 from app.api.recommendation import router as recommendation_router
 from app.api.analytics import router as analytics_router
+from app.api.chat import router as chat_router
 
 
 # Runs on startup and shutdown
@@ -35,6 +36,7 @@ app.add_middleware(
 # Register routers
 app.include_router(recommendation_router, prefix="/api/v1", tags=["Recommendations"])
 app.include_router(analytics_router, prefix="/api/v1", tags=["Analytics"])
+app.include_router(chat_router, prefix="/api/v1", tags=["Chat"])
 
 
 @app.get("/")
