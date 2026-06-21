@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from app.recommendation.search import load_search_engine
 from app.api.recommendation import router as recommendation_router
+from app.api.analytics import router as analytics_router
 
 
 # Runs on startup and shutdown
@@ -33,6 +34,7 @@ app.add_middleware(
 
 # Register routers
 app.include_router(recommendation_router, prefix="/api/v1", tags=["Recommendations"])
+app.include_router(analytics_router, prefix="/api/v1", tags=["Analytics"])
 
 
 @app.get("/")
