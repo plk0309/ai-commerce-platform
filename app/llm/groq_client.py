@@ -17,10 +17,7 @@ def _get_client() -> Groq:
 
 
 def get_llm_response(system_prompt: str, user_message: str, max_tokens: int = 500) -> str:
-    """
-    Single function used by both assistants.
-    Sends system_prompt + user_message to Groq LLaMA and returns text reply.
-    """
+    """Single-turn: system prompt + one user message."""
     try:
         client = _get_client()
         response = client.chat.completions.create(
@@ -37,9 +34,24 @@ def get_llm_response(system_prompt: str, user_message: str, max_tokens: int = 50
         return f"LLM unavailable: {str(e)}"
 
 
-if __name__ == "__main__":
-    reply = get_llm_response(
-        system_prompt="You are a helpful assistant.",
-        user_message="Say hello in one sentence."
-    )
-    print(reply)
+def get_llm_response_with_history(
+    system_prompt: str,
+    history: list,
+    max_tokens: int = 500,
+) -> str:
+    """
+    Multi-turn: system prompt + full conversation history.
+    history format: [{"role": "user"|"assistant", "content": "..."}]
+    """
+    try:
+        client = _get_client()
+        messages = [{"role": "system", "content": system_prompt}] + history
+        response = client.chat.completions.create(
+            model="llama-3.1-8b-instant",
+            messages=messages,
+            max_tokens=max_tokens,
+            temperature=0.7,
+        )
+        return response.choices[0].message.content.strip()
+    except Exception as e:
+        return f"LLM unavailable: {str(e)}"
