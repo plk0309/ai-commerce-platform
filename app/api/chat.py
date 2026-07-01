@@ -25,13 +25,14 @@ SHOPPING_KEYWORDS = [
     "under", "below", "budget", "cheap", "affordable", "best product",
     "wireless", "bluetooth", "gaming", "mechanical", "waterproof",
     "show me", "find me", "i need", "looking for", "gift",
-    # vague buying intent
     "what should i buy", "what can i buy", "suggest something",
     "recommend something", "help me choose",
 ]
 
 # In-memory session store
 _chat_sessions: dict = {}
+# Track which sessions are shopping sessions
+_shopping_sessions: set = set()
 
 
 class ChatRequest(BaseModel):
@@ -62,6 +63,17 @@ def _is_shopping_query(message: str, role: str) -> bool:
     return any(kw in msg for kw in SHOPPING_KEYWORDS)
 
 
+def _session_is_shopping(session_id: str, role: str) -> bool:
+    """
+    Returns True if this session was already identified as a shopping session.
+    This ensures follow-up messages like 'electronics' or 'under 3000' don't
+    accidentally get routed to the analytics engine.
+    """
+    if role == "admin":
+        return False
+    return session_id in _shopping_sessions
+
+
 def _context_has_category(history: list) -> bool:
     """
     Check if any earlier message in the conversation contains a product category.
@@ -84,7 +96,7 @@ def _build_enriched_query(history: list) -> str:
     """
     return " ".join(
         m["content"] for m in history if m["role"] == "user"
-    )[-300:]  # last 300 chars is enough context for FAISS
+    )[-300:]
 
 
 def _run_analytics_engine(intent: str, entities: dict):
@@ -150,7 +162,15 @@ def chat(req: ChatRequest):
     history.append({"role": "user", "content": message})
 
     try:
-        if _is_shopping_query(message, req.role):
+        # Route to shopping if: current message is shopping OR session is already shopping
+        is_shopping = (
+            _is_shopping_query(message, req.role) or
+            _session_is_shopping(req.session_id, req.role)
+        )
+
+        if is_shopping:
+            # Mark this session as a shopping session permanently
+            _shopping_sessions.add(req.session_id)
 
             # ── Decide: clarify or search? ────────────────────────
             current_is_vague = is_vague_query(message)
@@ -203,7 +223,7 @@ def chat(req: ChatRequest):
                 }
 
         else:
-            # ── Analytics path (unchanged) ────────────────────────
+            # ── Analytics path ────────────────────────────────────
             intent   = detect_analytics_intent(message)
             entities = extract_analytics_entities(message)
             data, summary = _run_analytics_engine(intent, entities)
@@ -225,7 +245,6 @@ def chat(req: ChatRequest):
             }
 
     except Exception as e:
-        # Remove the user message we added if something failed
         history.pop()
         raise HTTPException(status_code=500, detail=f"Chat error: {str(e)}")
 
