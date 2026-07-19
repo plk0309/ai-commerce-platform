@@ -212,6 +212,10 @@ def chat(req: ChatRequest):
 
                 result   = recommend(query=search_query, session_id=req.session_id, top_k=5)
                 products = result["products"]
+
+                # Filter out products with very low similarity scores
+                products = [p for p in products if p.get("similarity_score", 0) > 0.2]
+
                 intent   = result["intent"]
                 entities = result["entities"]
 
@@ -224,8 +228,8 @@ def chat(req: ChatRequest):
                         history=history,
                     )
                 else:
-                    llm_reply = ("I couldn't find products matching your request. "
-                                 "Try adjusting your budget or removing brand filters.")
+                    llm_reply = ("I couldn't find products matching your request in our current inventory. "
+                                 "Try a different category or broaden your search.")
 
                 response = {
                     "message"   : message,
