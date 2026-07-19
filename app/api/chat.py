@@ -26,12 +26,11 @@ SHOPPING_KEYWORDS = [
     "wireless", "bluetooth", "gaming", "mechanical", "waterproof",
     "show me", "find me", "i need", "looking for", "gift",
     "what should i buy", "what can i buy", "suggest something",
-    "recommend something", "help me choose",
+    "recommend something", "help me choose", "suggest me", "something to buy",
+    "any suggestions", "any recommendations", "what to buy",
 ]
 
-# In-memory session store
 _chat_sessions: dict = {}
-# Track which sessions are shopping sessions
 _shopping_sessions: set = set()
 
 
@@ -64,36 +63,28 @@ def _is_shopping_query(message: str, role: str) -> bool:
 
 
 def _session_is_shopping(session_id: str, role: str) -> bool:
-    """
-    Returns True if this session was already identified as a shopping session.
-    This ensures follow-up messages like 'electronics' or 'under 3000' don't
-    accidentally get routed to the analytics engine.
-    """
     if role == "admin":
         return False
     return session_id in _shopping_sessions
 
 
 def _context_has_category(history: list) -> bool:
-    """
-    Check if any earlier message in the conversation contains a product category.
-    Used to decide if a follow-up like 'under 3000' can now trigger a search.
-    """
     CATEGORY_SIGNALS = [
         "earbuds", "headphone", "laptop", "keyboard", "mouse", "speaker",
         "phone", "tablet", "charger", "camera", "monitor", "tv", "fan",
         "cooler", "mixer", "iron", "trimmer", "bag", "shoes", "watch",
         "electronics", "clothing", "home", "kitchen", "appliance",
+        "dress", "notebook", "calculator", "pen", "bottle", "backpack",
+        "stationery", "gaming", "wireless", "bluetooth",
     ]
-    full_text = " ".join(m["content"].lower() for m in history)
-    return any(s in full_text for s in CATEGORY_SIGNALS)
+    # Only look at user messages, not assistant messages
+    user_messages = " ".join(
+        m["content"].lower() for m in history if m["role"] == "user"
+    )
+    return any(s in user_messages for s in CATEGORY_SIGNALS)
 
 
 def _build_enriched_query(history: list) -> str:
-    """
-    Combine relevant parts of the conversation into a single search query.
-    E.g. user said 'electronics' then 'under 3000' → 'electronics under 3000'
-    """
     return " ".join(
         m["content"] for m in history if m["role"] == "user"
     )[-300:]
@@ -157,27 +148,23 @@ def chat(req: ChatRequest):
         raise HTTPException(status_code=400, detail="Message cannot be empty")
 
     history = _get_session(req.session_id)
-
-    # Add current user message to history first
     history.append({"role": "user", "content": message})
 
     try:
-        # Route to shopping if: current message is shopping OR session is already shopping
         is_shopping = (
             _is_shopping_query(message, req.role) or
             _session_is_shopping(req.session_id, req.role)
         )
 
         if is_shopping:
-            # Mark this session as a shopping session permanently
             _shopping_sessions.add(req.session_id)
 
-            # ── Decide: clarify or search? ────────────────────────
             current_is_vague = is_vague_query(message)
+            # Only check user messages for category context
             history_has_context = _context_has_category(history)
 
             if current_is_vague and not history_has_context:
-                # Not enough info yet — ask a clarifying question
+                # Vague with no prior context — ask clarifying question, NO products
                 llm_reply = get_clarifying_reply(history)
                 response = {
                     "message"   : message,
@@ -188,7 +175,7 @@ def chat(req: ChatRequest):
                 }
 
             else:
-                # Either query is clear, OR user already provided context earlier
+                # Clear query OR vague but context exists in history
                 search_query = (
                     _build_enriched_query(history)
                     if history_has_context and current_is_vague
@@ -223,7 +210,6 @@ def chat(req: ChatRequest):
                 }
 
         else:
-            # ── Analytics path ────────────────────────────────────
             intent   = detect_analytics_intent(message)
             entities = extract_analytics_entities(message)
             data, summary = _run_analytics_engine(intent, entities)
@@ -248,7 +234,5 @@ def chat(req: ChatRequest):
         history.pop()
         raise HTTPException(status_code=500, detail=f"Chat error: {str(e)}")
 
-    # Save assistant reply to history
     history.append({"role": "assistant", "content": llm_reply})
-
     return response
