@@ -1,3 +1,4 @@
+import re
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
@@ -75,9 +76,9 @@ def _context_has_category(history: list) -> bool:
         "cooler", "mixer", "iron", "trimmer", "bag", "shoes", "watch",
         "electronics", "clothing", "home", "kitchen", "appliance",
         "dress", "notebook", "calculator", "pen", "bottle", "backpack",
-        "stationery", "gaming", "wireless", "bluetooth",
+        "stationery", "gaming", "wireless", "bluetooth", "drawing",
+        "birthday", "gift", "sister", "brother", "friend",
     ]
-    # Only look at user messages, not assistant messages
     user_messages = " ".join(
         m["content"].lower() for m in history if m["role"] == "user"
     )
@@ -85,9 +86,32 @@ def _context_has_category(history: list) -> bool:
 
 
 def _build_enriched_query(history: list) -> str:
-    return " ".join(
-        m["content"] for m in history if m["role"] == "user"
-    )[-300:]
+    """
+    Build search query from last 2 user messages only.
+    Avoids polluting the query with old unrelated messages.
+    """
+    user_messages = [m["content"] for m in history if m["role"] == "user"]
+    recent = user_messages[-2:] if len(user_messages) >= 2 else user_messages
+    return " ".join(recent)
+
+
+def _clean_query(query: str) -> str:
+    """
+    Remove negative/exclusion phrases that confuse FAISS.
+    e.g. 'suggest something other than tablet' → 'suggest something'
+    """
+    exclusion_patterns = [
+        r'\bother than\s+\w+',
+        r'\bnot\s+\w+',
+        r'\bexcept\s+\w+',
+        r'\binstead of\s+\w+',
+        r'\bno\s+\w+',
+        r'\bwithout\s+\w+',
+    ]
+    cleaned = query
+    for pattern in exclusion_patterns:
+        cleaned = re.sub(pattern, '', cleaned, flags=re.IGNORECASE)
+    return cleaned.strip()
 
 
 def _run_analytics_engine(intent: str, entities: dict):
@@ -160,11 +184,9 @@ def chat(req: ChatRequest):
             _shopping_sessions.add(req.session_id)
 
             current_is_vague = is_vague_query(message)
-            # Only check user messages for category context
             history_has_context = _context_has_category(history)
 
             if current_is_vague and not history_has_context:
-                # Vague with no prior context — ask clarifying question, NO products
                 llm_reply = get_clarifying_reply(history)
                 response = {
                     "message"   : message,
@@ -175,12 +197,14 @@ def chat(req: ChatRequest):
                 }
 
             else:
-                # Clear query OR vague but context exists in history
                 search_query = (
                     _build_enriched_query(history)
                     if history_has_context and current_is_vague
                     else message
                 )
+
+                # Clean negative phrases before searching
+                search_query = _clean_query(search_query)
 
                 result   = recommend(query=search_query, session_id=req.session_id, top_k=5)
                 products = result["products"]
