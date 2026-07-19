@@ -1,73 +1,92 @@
 export default function LoginPage({ onSelect }) {
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center px-4">
+    <div style={{
+      minHeight: "100vh", background: "#0a0f0a",
+      display: "flex", flexDirection: "column",
+      alignItems: "center", justifyContent: "center", padding: "32px 16px"
+    }}>
 
       {/* Logo */}
-      <div className="mb-10 text-center">
-        <div className="w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center mx-auto mb-4">
-          <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-              d="M13 10V3L4 14h7v7l9-11h-7z" />
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+        <div style={{
+          width: 42, height: 42, background: "#22c55e",
+          borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center"
+        }}>
+          <svg width="20" height="20" fill="none" stroke="#0a0f0a" strokeWidth="2.5" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
           </svg>
         </div>
-        <h1 className="text-2xl font-semibold text-slate-900">ShopAI</h1>
-        <p className="text-slate-400 text-sm mt-1">AI-powered Commerce Platform</p>
+        <span style={{ fontSize: 22, fontWeight: 500, color: "#e8f5e8" }}>ShopAI</span>
       </div>
+      <p style={{ fontSize: 12, color: "#6b8f6b", marginBottom: 32 }}>AI-powered Commerce Platform</p>
 
-      {/* Heading */}
-      <p className="text-slate-500 text-sm mb-6">Select how you want to continue</p>
+      <p style={{ fontSize: 12, color: "#6b8f6b", marginBottom: 16 }}>Select how you want to continue</p>
 
-      {/* Role Cards */}
-      <div className="flex flex-col sm:flex-row gap-4 w-full max-w-lg">
+      {/* Cards */}
+      <div style={{ display: "flex", gap: 14, width: "100%", maxWidth: 480 }}>
 
-        {/* Customer Card */}
-        <button
-          onClick={() => onSelect("customer")}
-          className="flex-1 bg-white border border-slate-200 rounded-2xl p-6 text-left hover:border-indigo-400 hover:shadow-md transition-all group"
+        {/* Customer */}
+        <button onClick={() => onSelect("customer")} style={{
+          flex: 1, background: "#0f1a0f", border: "1px solid #1f331f",
+          borderRadius: 14, padding: "20px 16px", textAlign: "left",
+          cursor: "pointer", transition: "all 0.2s"
+        }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = "#22c55e"; e.currentTarget.style.background = "#142014"; }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = "#1f331f"; e.currentTarget.style.background = "#0f1a0f"; }}
         >
-          <div className="w-11 h-11 bg-indigo-50 rounded-xl flex items-center justify-center mb-4 group-hover:bg-indigo-100 transition-colors">
-            <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+          <div style={{
+            width: 40, height: 40, background: "#22c55e18",
+            border: "1px solid #22c55e33", borderRadius: 10,
+            display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 14
+          }}>
+            <svg width="18" height="18" fill="none" stroke="#22c55e" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
             </svg>
           </div>
-          <h2 className="text-base font-semibold text-slate-900 mb-1">Customer</h2>
-          <p className="text-slate-400 text-sm leading-relaxed">
-            Browse products, get AI-powered recommendations, and find the best deals.
+          <p style={{ fontSize: 14, fontWeight: 500, color: "#e8f5e8", marginBottom: 6 }}>Customer</p>
+          <p style={{ fontSize: 12, color: "#6b8f6b", lineHeight: 1.6, marginBottom: 14 }}>
+            Browse products, get AI-powered recommendations and find the best deals.
           </p>
-          <div className="mt-4 flex items-center gap-1 text-indigo-600 text-sm font-medium">
+          <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, fontWeight: 500, color: "#22c55e" }}>
             Shop now
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            <svg width="14" height="14" fill="none" stroke="#22c55e" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
             </svg>
           </div>
         </button>
 
-        {/* Admin Card */}
-        <button
-          onClick={() => onSelect("admin")}
-          className="flex-1 bg-white border border-slate-200 rounded-2xl p-6 text-left hover:border-violet-400 hover:shadow-md transition-all group"
+        {/* Admin */}
+        <button onClick={() => onSelect("admin")} style={{
+          flex: 1, background: "#0f1a0f", border: "1px solid #1f331f",
+          borderRadius: 14, padding: "20px 16px", textAlign: "left",
+          cursor: "pointer", transition: "all 0.2s"
+        }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = "#f0b429"; e.currentTarget.style.background = "#1a160a"; }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = "#1f331f"; e.currentTarget.style.background = "#0f1a0f"; }}
         >
-          <div className="w-11 h-11 bg-violet-50 rounded-xl flex items-center justify-center mb-4 group-hover:bg-violet-100 transition-colors">
-            <svg className="w-5 h-5 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          <div style={{
+            width: 40, height: 40, background: "#f0b42918",
+            border: "1px solid #f0b42933", borderRadius: 10,
+            display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 14
+          }}>
+            <svg width="18" height="18" fill="none" stroke="#f0b429" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
           </div>
-          <h2 className="text-base font-semibold text-slate-900 mb-1">Admin</h2>
-          <p className="text-slate-400 text-sm leading-relaxed">
-            View sales analytics, revenue trends, top products, and business insights.
+          <p style={{ fontSize: 14, fontWeight: 500, color: "#e8f5e8", marginBottom: 6 }}>Admin</p>
+          <p style={{ fontSize: 12, color: "#6b8f6b", lineHeight: 1.6, marginBottom: 14 }}>
+            View sales analytics, revenue trends, top products and business insights.
           </p>
-          <div className="mt-4 flex items-center gap-1 text-violet-600 text-sm font-medium">
+          <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, fontWeight: 500, color: "#f0b429" }}>
             View dashboard
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            <svg width="14" height="14" fill="none" stroke="#f0b429" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
             </svg>
           </div>
         </button>
       </div>
 
-      <p className="text-slate-300 text-xs mt-8">AI Commerce Platform · Katharos Techie</p>
+      <p style={{ fontSize: 11, color: "#2a3f2a", marginTop: 28 }}>AI Commerce Platform · Katharos Techie</p>
     </div>
   )
 }

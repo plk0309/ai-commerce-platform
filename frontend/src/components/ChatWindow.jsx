@@ -6,8 +6,8 @@ import ProductCard from "./ProductCard"
 const API = "http://127.0.0.1:8000/api/v1/chat"
 
 const WELCOME = {
-  customer: "Hi! I'm your Shopping Assistant. Tell me what you're looking for or your budget and I'll find the best products for you!",
-  admin: "Hi! I'm your Analytics Assistant. Ask me about revenue, top products, sales trends, anomalies, or customer stats.",
+  customer: "Hi! Tell me what you're looking for or your budget and I'll find the best products for you!",
+  admin: "Hi! Ask me about revenue, top products, sales trends, anomalies, or customer stats.",
 }
 
 const PLACEHOLDER = {
@@ -23,12 +23,12 @@ export default function ChatWindow({ role }) {
   const [input, setInput] = useState("")
   const [loading, setLoading] = useState(false)
   const bottomRef = useRef(null)
+  const isAdmin = role === "admin"
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
 
-  // Reset chat when role changes
   useEffect(() => {
     setMessages([{ from: "bot", text: WELCOME[role], products: [] }])
     setInput("")
@@ -38,11 +38,9 @@ export default function ChatWindow({ role }) {
   const sendMessage = async () => {
     const text = input.trim()
     if (!text || loading) return
-
     setMessages(prev => [...prev, { from: "user", text }])
     setInput("")
     setLoading(true)
-
     try {
       const res = await axios.post(API, {
         message: text,
@@ -66,19 +64,42 @@ export default function ChatWindow({ role }) {
     }
   }
 
-  const isAdmin = role === "admin"
-  const accent = isAdmin ? "violet" : "indigo"
-
   return (
-    <div className="w-full max-w-3xl flex flex-col bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm" style={{ height: "75vh" }}>
+    <div style={{
+      width: "100%", maxWidth: 760,
+      display: "flex", flexDirection: "column",
+      background: "#0a0f0a",
+      border: "1px solid #1f331f",
+      borderRadius: 16, overflow: "hidden",
+      height: "75vh",
+    }}>
+
+      {/* Online bar */}
+      <div style={{
+        padding: "10px 18px",
+        borderBottom: "1px solid #1f331f",
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        background: "#0c160c"
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#22c55e" }} />
+          <span style={{ fontSize: 11, color: "#6b8f6b" }}>
+            {isAdmin ? "LLaMA 3.1 · Analytics Engine" : "LLaMA 3.1 · FAISS Search"}
+          </span>
+        </div>
+        <span style={{ fontSize: 11, color: "#22c55e" }}>● Online</span>
+      </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-5 space-y-4">
+      <div style={{ flex: 1, overflowY: "auto", padding: "18px", display: "flex", flexDirection: "column", gap: 14 }}>
         {messages.map((msg, i) => (
           <div key={i}>
-            <MessageBubble message={msg} accent={accent} />
+            <MessageBubble message={msg} isAdmin={isAdmin} />
             {msg.products?.length > 0 && (
-              <div className="mt-3 ml-10 grid grid-cols-2 gap-3">
+              <div style={{
+                marginTop: 10, marginLeft: 34,
+                display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8
+              }}>
                 {msg.products.map((p, j) => <ProductCard key={j} product={p} />)}
               </div>
             )}
@@ -86,10 +107,13 @@ export default function ChatWindow({ role }) {
         ))}
 
         {loading && (
-          <div className="flex gap-2 items-center ml-10">
-            {[0, 150, 300].map(delay => (
-              <div key={delay} className="w-2 h-2 bg-slate-300 rounded-full animate-bounce"
-                style={{ animationDelay: `${delay}ms` }} />
+          <div style={{ display: "flex", gap: 8, alignItems: "center", marginLeft: 34 }}>
+            {[0, 150, 300].map(d => (
+              <div key={d} style={{
+                width: 6, height: 6, borderRadius: "50%", background: "#6b8f6b",
+                animation: "bounce 1s infinite",
+                animationDelay: `${d}ms`
+              }} />
             ))}
           </div>
         )}
@@ -97,22 +121,48 @@ export default function ChatWindow({ role }) {
       </div>
 
       {/* Input */}
-      <div className="p-4 border-t border-slate-100 flex gap-3">
+      <div style={{
+        padding: "12px 16px", borderTop: "1px solid #1f331f",
+        display: "flex", gap: 10, alignItems: "center",
+        background: "#0c160c"
+      }}>
         <input
-          className="flex-1 bg-slate-50 border border-slate-200 text-slate-800 placeholder-slate-400 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-all"
+          style={{
+            flex: 1, background: "#0f1a0f",
+            border: "1px solid #1f331f", borderRadius: 10,
+            padding: "10px 14px", fontSize: 13,
+            color: "#c8e8c8", outline: "none",
+            fontFamily: "inherit"
+          }}
           placeholder={PLACEHOLDER[role]}
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={e => e.key === "Enter" && !e.shiftKey && (e.preventDefault(), sendMessage())}
+          onFocus={e => e.target.style.borderColor = isAdmin ? "#f0b42966" : "#22c55e66"}
+          onBlur={e => e.target.style.borderColor = "#1f331f"}
         />
         <button
           onClick={sendMessage}
           disabled={loading}
-          className={`px-5 py-3 rounded-xl text-sm font-medium text-white disabled:opacity-50 transition-all ${isAdmin ? "bg-violet-600 hover:bg-violet-700" : "bg-indigo-600 hover:bg-indigo-700"}`}
+          style={{
+            width: 38, height: 38, borderRadius: 10, border: "none",
+            background: isAdmin ? "#f0b429" : "#22c55e",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            cursor: "pointer", opacity: loading ? 0.5 : 1, flexShrink: 0
+          }}
         >
-          Send
+          <svg width="16" height="16" fill="none" stroke={isAdmin ? "#0a0f0a" : "#0a0f0a"} strokeWidth="2.5" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
+          </svg>
         </button>
       </div>
+
+      <style>{`
+        @keyframes bounce {
+          0%, 80%, 100% { transform: translateY(0); }
+          40% { transform: translateY(-5px); }
+        }
+      `}</style>
     </div>
   )
 }
