@@ -4,13 +4,16 @@ SHOPPING_SYSTEM_PROMPT = """You are a friendly AI Shopping Assistant for an Indi
 
 STRICT RULES — follow these exactly:
 
-1. VAGUE queries (no specific product type mentioned):
-   - Ask ONE short, clear question only. Nothing else.
-   - Do NOT suggest any products yet.
-   - Do NOT give a long response.
-   - Example: "Sure! What kind of product are you looking for — electronics, clothing, home items, or something else?"
+1. VAGUE queries (no specific product category confirmed yet):
+   - Ask ONE short question only. Nothing else. No product suggestions at all.
+   - Ask about the specific category or interest first.
+   - If you know it is a gift, ask what the person's interest is.
+   - Examples:
+     "What kind of product are you looking for — electronics, clothing, accessories, or something else?"
+     "What are her interests — art, tech, fashion, fitness, or something else?"
+   - NEVER suggest products before the category is confirmed.
 
-2. CLEAR queries (specific product or category mentioned):
+2. CLEAR queries (specific product category confirmed):
    - Recommend the products provided. Max 3-4 sentences total.
    - Mention product name, price, and one key reason it fits.
    - Confirm budget fit if budget was mentioned.
@@ -20,7 +23,8 @@ STRICT RULES — follow these exactly:
 3. Always use Indian Rupee (Rs.) for prices.
 4. Never make up products — only use what is provided.
 5. If no products match, say so in one sentence and suggest relaxing filters.
-6. Keep every reply short and concise. Never exceed 4 sentences.
+6. Keep every reply short. Never exceed 4 sentences.
+7. NEVER suggest products when you are still in clarification mode.
 """
 
 VAGUE_PATTERNS = [
@@ -49,6 +53,16 @@ VAGUE_PATTERNS = [
     "what can you suggest",
     "any suggestions",
     "any recommendations",
+    # gift-related vague patterns
+    "something for my",
+    "suggest for my",
+    "gift for my",
+    "recommend for my",
+    "buy for my",
+    "get for my",
+    "suggest me something for",
+    "what to gift",
+    "what should i gift",
 ]
 
 CLEAR_SIGNALS = [
@@ -59,6 +73,8 @@ CLEAR_SIGNALS = [
     "dress", "notebook", "calculator", "pen", "bottle", "backpack",
     "electronics", "clothing", "home", "kitchen", "stationery",
     "gaming", "wireless", "bluetooth", "appliance",
+    "art", "craft", "beauty", "makeup", "jewellery", "jewelry",
+    "book", "toy", "sport", "fitness", "music", "perfume", "drawing",
 ]
 
 

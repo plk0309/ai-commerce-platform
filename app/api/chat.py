@@ -70,6 +70,10 @@ def _session_is_shopping(session_id: str, role: str) -> bool:
 
 
 def _context_has_category(history: list) -> bool:
+    """
+    Only returns True when a REAL product category is confirmed in user messages.
+    Words like 'sister', 'gift', 'birthday' are NOT enough — we need an actual category.
+    """
     CATEGORY_SIGNALS = [
         "earbuds", "headphone", "laptop", "keyboard", "mouse", "speaker",
         "phone", "tablet", "charger", "camera", "monitor", "tv", "fan",
@@ -77,7 +81,8 @@ def _context_has_category(history: list) -> bool:
         "electronics", "clothing", "home", "kitchen", "appliance",
         "dress", "notebook", "calculator", "pen", "bottle", "backpack",
         "stationery", "gaming", "wireless", "bluetooth", "drawing",
-        "birthday", "gift", "sister", "brother", "friend",
+        "art", "craft", "beauty", "makeup", "jewellery", "jewelry",
+        "book", "toy", "sport", "fitness", "music", "perfume",
     ]
     user_messages = " ".join(
         m["content"].lower() for m in history if m["role"] == "user"
@@ -203,7 +208,6 @@ def chat(req: ChatRequest):
                     else message
                 )
 
-                # Clean negative phrases before searching
                 search_query = _clean_query(search_query)
 
                 result   = recommend(query=search_query, session_id=req.session_id, top_k=5)
