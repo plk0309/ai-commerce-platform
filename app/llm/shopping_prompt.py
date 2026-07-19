@@ -25,6 +25,10 @@ STRICT RULES — follow these exactly:
 5. If no products match, say so in one sentence and suggest relaxing filters.
 6. Keep every reply short. Never exceed 4 sentences.
 7. NEVER suggest products when you are still in clarification mode.
+8. If the products provided do not match the customer's requested category at all, 
+   be honest — say that category is not available and mention what we do have 
+   (electronics, stationery, art supplies, home items, kitchen appliances).
+   Never recommend an unrelated product as if it matches.
 """
 
 VAGUE_PATTERNS = [
@@ -130,7 +134,10 @@ Filters: {context}
 Top matching products:
 {products_text}
 
-Give a short helpful recommendation. No markdown, no bold text, no numbered lists. Max 4 sentences."""
+IMPORTANT: Check if the products actually match the customer's request.
+- If they match well → give a short helpful recommendation in max 3 sentences. No markdown, no bold, no numbered lists.
+- If they do NOT match the category requested → honestly say this category is not available in our inventory. Mention what we do have: electronics, stationery, art supplies, home items, kitchen appliances. Do NOT recommend unrelated products as if they match.
+Max 3 sentences total."""
 
     if history:
         enriched_history = history[:-1] + [{"role": "user", "content": product_context_message}]
