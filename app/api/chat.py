@@ -31,6 +31,16 @@ SHOPPING_KEYWORDS = [
     "any suggestions", "any recommendations", "what to buy",
 ]
 
+GREETINGS = [
+    "hello", "hi", "hey", "hii", "helo", "heyy",
+    "how are you", "how r u", "how are u", "how r you",
+    "good morning", "good afternoon", "good evening", "good night",
+    "bye", "goodbye", "see you", "take care",
+    "thanks", "thank you", "thankyou", "thx",
+    "ok", "okay", "great", "cool", "nice", "wow", "awesome", "alright",
+    "who are you", "what are you", "what can you do",
+]
+
 _chat_sessions: dict = {}
 _shopping_sessions: set = set()
 
@@ -69,11 +79,45 @@ def _session_is_shopping(session_id: str, role: str) -> bool:
     return session_id in _shopping_sessions
 
 
+def _is_greeting(message: str) -> bool:
+    msg = message.lower().strip()
+    return any(g in msg for g in GREETINGS)
+
+
+def _get_greeting_reply(message: str, role: str) -> str:
+    msg = message.lower()
+    if any(w in msg for w in ["bye", "goodbye", "see you", "take care"]):
+        return "Goodbye! Feel free to come back anytime. Happy shopping!"
+    if any(w in msg for w in ["thank", "thanks", "thx"]):
+        return "You're welcome! Let me know if you need anything else."
+    if any(w in msg for w in ["how are you", "how r u", "how are u", "how r you"]):
+        return "I'm doing great, thanks for asking! Ready to help you out. What are you looking for?"
+    if any(w in msg for w in ["who are you", "what are you", "what can you do"]):
+        if role == "customer":
+            return "I'm your AI Shopping Assistant! I can help you find products by category, budget, or brand. Just tell me what you're looking for!"
+        else:
+            return "I'm your AI Analytics Assistant! I can show you revenue trends, top products, KPIs, anomalies, and customer stats. What would you like to know?"
+    if any(w in msg for w in ["good morning"]):
+        return "Good morning! Hope you're having a great day. What can I help you find today?"
+    if any(w in msg for w in ["good afternoon"]):
+        return "Good afternoon! What can I help you with today?"
+    if any(w in msg for w in ["good evening"]):
+        return "Good evening! What are you looking for today?"
+    if any(w in msg for w in ["good night"]):
+        return "Good night! Come back anytime you need help finding products."
+    if any(w in msg for w in ["ok", "okay", "alright", "great", "cool", "nice", "wow", "awesome"]):
+        if role == "customer":
+            return "Great! Let me know if you'd like to search for any products."
+        else:
+            return "Great! Let me know if you'd like any analytics insights."
+    # Default hello/hi/hey
+    if role == "customer":
+        return "Hi there! I'm your Shopping Assistant. Tell me what you're looking for or your budget and I'll find the best products for you!"
+    else:
+        return "Hi there! I'm your Analytics Assistant. Ask me about revenue, top products, sales trends, or customer stats."
+
+
 def _context_has_category(history: list) -> bool:
-    """
-    Only returns True when a REAL product category is confirmed in user messages.
-    Words like 'sister', 'gift', 'birthday' are NOT enough — we need an actual category.
-    """
     CATEGORY_SIGNALS = [
         "earbuds", "headphone", "laptop", "keyboard", "mouse", "speaker",
         "phone", "tablet", "charger", "camera", "monitor", "tv", "fan",
@@ -91,20 +135,12 @@ def _context_has_category(history: list) -> bool:
 
 
 def _build_enriched_query(history: list) -> str:
-    """
-    Build search query from last 2 user messages only.
-    Avoids polluting the query with old unrelated messages.
-    """
     user_messages = [m["content"] for m in history if m["role"] == "user"]
     recent = user_messages[-2:] if len(user_messages) >= 2 else user_messages
     return " ".join(recent)
 
 
 def _clean_query(query: str) -> str:
-    """
-    Remove negative/exclusion phrases that confuse FAISS.
-    e.g. 'suggest something other than tablet' → 'suggest something'
-    """
     exclusion_patterns = [
         r'\bother than\s+\w+',
         r'\bnot\s+\w+',
@@ -185,7 +221,18 @@ def chat(req: ChatRequest):
             _session_is_shopping(req.session_id, req.role)
         )
 
-        if is_shopping:
+        # ── Greeting check — handle before all other routing ──
+        if _is_greeting(message) and not is_shopping:
+            llm_reply = _get_greeting_reply(message, req.role)
+            response = {
+                "message"   : message,
+                "reply"     : llm_reply,
+                "type"      : "greeting",
+                "products"  : [],
+                "session_id": req.session_id,
+            }
+
+        elif is_shopping:
             _shopping_sessions.add(req.session_id)
 
             current_is_vague = is_vague_query(message)
